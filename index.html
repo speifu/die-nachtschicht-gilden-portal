@@ -263,59 +263,102 @@
         <div id="regeln" class="tab-content"><div class="card"><h2>Regeln</h2><p>In Kürze...</p></div></div>
     </main>
 
-    <script>
-        const CLIENT_ID = '1561898325244903468';
-        const REDIRECT_URI = 'https://speifu.github.io/die-nachtschicht-gilden-portal/';
+<script>
+    const CLIENT_ID = '1561898325244903468';
+    const REDIRECT_URI = 'https://speifu.github.io/die-nachtschicht-gilden-portal/';
+    // Hier deine Google Apps Script Web-App-URL eintragen:
+    const DB_WEB_APP_URL = 'DEINE_GOOGLE_WEB_APP_URL_HIER';
 
-        function openTab(evt, tabName) {
-            const contents = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
-            
-            const buttons = document.getElementsByClassName("nav-btn");
-            for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
+    function openTab(evt, tabName) {
+        const contents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+        
+        const buttons = document.getElementsByClassName("nav-btn");
+        for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
 
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+
+    function filterTable() {
+        const input = document.getElementById("memberSearch").value.toUpperCase();
+        const trs = document.getElementById("memberTable").getElementsByTagName("tr");
+        for (let i = 1; i < trs.length; i++) {
+            const txt = trs[i].textContent || trs[i].innerText;
+            trs[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? "" : "none";
         }
+    }
 
-        function filterTable() {
-            const input = document.getElementById("memberSearch").value.toUpperCase();
-            const trs = document.getElementById("memberTable").getElementsByTagName("tr");
-            for (let i = 1; i < trs.length; i++) {
-                const txt = trs[i].textContent || trs[i].innerText;
-                trs[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? "" : "none";
-            }
+    function loginWithDiscord() {
+        const scope = encodeURIComponent('identify guilds.members.read');
+        const redirect = encodeURIComponent(REDIRECT_URI);
+        const discordUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
+        window.location.href = discordUrl;
+    }
+
+    // Mitglieder-Daten live aus Google Sheets laden
+    function loadMembersFromDB() {
+        fetch(DB_WEB_APP_URL)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector("#memberTable tbody");
+                if (!tbody) return;
+                tbody.innerHTML = ""; // Beispieldaten leeren
+
+                data.forEach(member => {
+                    const tr = document.createElement("tr");
+
+                    // Badge für Rollen
+                    let badgeClass = "badge-stamm";
+                    if (member.Gild_Rolle === "Schichtführer") badgeClass = "badge-schichtf";
+                    if (member.Gild_Rolle === "Vorarbeiter") badgeClass = "badge-vorarbeiter";
+
+                    // Status Farbe
+                    const statusColor = member.Status === "Aktiv" ? "#4ade80" : "#ef4444";
+
+                    tr.innerHTML = `
+                        <td><strong>${member.Display_Name || ''}</strong></td>
+                        <td><span class="badge ${badgeClass}">${member.Gild_Rolle || 'Mitglied'}</span></td>
+                        <td>${member.Main_Spec || '-'}</td>
+                        <td>${member.Twink_Spec_1 || '-'}</td>
+                        <td>${member.Twink_Spec_2 || '-'}</td>
+                        <td class="internal-col"><span style="color: ${statusColor};">${member.Status || 'Aktiv'}</span></td>
+                        <td class="internal-col">${member.Username || ''}</td>
+                        <td class="internal-col"><input type="text" class="note-input" value="${member.Offi_Notiz || ''}"></td>
+                        <td class="internal-col"><input type="text" class="note-input" value="${member.Raidleitung_Notiz || ''}"></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => console.error("Fehler beim Laden der Mitglieder:", err));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // Mitglieder aus DB laden
+        loadMembersFromDB();
+
+        // Discord Auth Login-Prüfung
+        const hash = window.location.hash.slice(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+
+        if (accessToken) {
+            fetch('https://discord.com/api/users/@me', {
+                headers: { authorization: `Bearer ${accessToken}` }
+            })
+            .then(res => res.json())
+            .then(user => {
+                const btn = document.getElementById("discordBtn");
+                if (btn) {
+                    btn.classList.add("active");
+                    btn.innerHTML = `<span>Aktiv: ${user.username}</span>`;
+                }
+                document.body.classList.add("offi-mode");
+            })
+            .catch(err => console.error("Discord Auth Fehler:", err));
         }
-
-        function loginWithDiscord() {
-            const scope = encodeURIComponent('identify guilds.members.read');
-            const redirect = encodeURIComponent(REDIRECT_URI);
-            const discordUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
-            window.location.href = discordUrl;
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const hash = window.location.hash.slice(1);
-            const params = new URLSearchParams(hash);
-            const accessToken = params.get('access_token');
-
-            if (accessToken) {
-                fetch('https://discord.com/api/users/@me', {
-                    headers: { authorization: `Bearer ${accessToken}` }
-                })
-                .then(res => res.json())
-                .then(user => {
-                    const btn = document.getElementById("discordBtn");
-                    if (btn) {
-                        btn.classList.add("active");
-                        btn.innerHTML = `<span>Aktiv: ${user.username}</span>`;
-                    }
-                    document.body.classList.add("offi-mode");
-                })
-                .catch(err => console.error("Discord Auth Fehler:", err));
-            }
-        });
-    </script>
+    });
+</script>
 
 </body>
 </html>
