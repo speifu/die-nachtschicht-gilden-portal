@@ -80,6 +80,14 @@
             color: #f59e0b;
             margin-bottom: 1rem;
         }
+
+        /* Tab-Inhalte ausblenden/einblenden */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -94,20 +102,80 @@
 
     <!-- Navigation Tabs -->
     <nav>
-        <button class="nav-btn active">Übersicht / News</button>
-        <button class="nav-btn">Mitglieder</button>
-        <button class="nav-btn">Raid & Kader</button>
-        <button class="nav-btn">Gildenbank & Loot</button>
-        <button class="nav-btn">Regeln</button>
+        <button class="nav-btn active" onclick="openTab(event, 'news')">Übersicht / News</button>
+        <button class="nav-btn" onclick="openTab(event, 'mitglieder')">Mitglieder</button>
+        <button class="nav-btn" onclick="openTab(event, 'raid')">Raid & Kader</button>
+        <button class="nav-btn" onclick="openTab(event, 'bank')">Gildenbank & Loot</button>
+        <button class="nav-btn" onclick="openTab(event, 'regeln')">Regeln</button>
     </nav>
 
     <!-- Hauptbereich -->
     <main>
-        <div class="card">
-            <h2>Willkommen auf dem Gildenportal</h2>
-            <p>Hier entsteht die neue Zentrale der Gilde <strong>Die Nachtschicht</strong>.</p>
+        <!-- TAB 1: NEWS -->
+        <div id="news" class="tab-content active">
+            <div class="card">
+                <h2>Willkommen auf dem Gildenportal</h2>
+                <p>Hier entsteht die neue Zentrale der Gilde <strong>Die Nachtschicht</strong>.</p>
+            </div>
+            <div class="card">
+                <h2>Letchte Ankündigungen</h2>
+                <p>Vorbereitungen für den Release laufen auf Hochtouren!</p>
+            </div>
+        </div>
+
+        <!-- TAB 2: MITGLIEDER -->
+        <div id="mitglieder" class="tab-content">
+            <div class="card">
+                <h2>Gilden-Mitglieder</h2>
+                <p>Hier wird in Kürze eure Mitgliederliste geladen.</p>
+            </div>
+        </div>
+
+        <!-- TAB 3: RAID -->
+        <div id="raid" class="tab-content">
+            <div class="card">
+                <h2>Raid & Kader-Aufstellung</h2>
+                <p>Hier kommt der Event-Kalender und die Kader-Übersicht hin.</p>
+            </div>
+        </div>
+
+        <!-- TAB 4: BANK -->
+        <div id="bank" class="tab-content">
+            <div class="card">
+                <h2>Gildenbank & Schichtkonto (SKZ)</h2>
+                <p>Übersicht der Gildenbank-Bestände und Punktekonten.</p>
+            </div>
+        </div>
+
+        <!-- TAB 5: REGELN -->
+        <div id="regeln" class="tab-content">
+            <div class="card">
+                <h2>Gilden- & Raidregeln</h2>
+                <p>Hier steht bald das vollständige Regelwerk.</p>
+            </div>
         </div>
     </main>
+
+    <!-- JavaScript für Tab-Steuerung -->
+    <script>
+        function openTab(evt, tabName) {
+            // Alle Tab-Inhalte verbergen
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove("active");
+            }
+
+            // Alle Tab-Buttons deaktivieren
+            const buttons = document.getElementsByClassName("nav-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+            }
+
+            // Gewählten Tab aktivieren
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+    </script>
 
 </body>
 </html>
