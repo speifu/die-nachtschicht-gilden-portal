@@ -5,34 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Die Nachtschicht - Gildenportal</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             background-color: #0f172a;
             color: #f8fafc;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        /* Header */
+        header {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 1.5rem 2rem;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+        }
+        .logo h1 {
+            color: #f59e0b;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        .logo span {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 0 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            padding: 1rem 1.2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            color: #f8fafc;
+        }
+        .nav-btn.active {
+            color: #f59e0b;
+            border-bottom-color: #f59e0b;
+        }
+
+        /* Hauptinhalt */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
         .card {
             background-color: #1e293b;
-            padding: 2rem;
-            border-radius: 12px;
             border: 1px solid #334155;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
-        h1 {
+        .card h2 {
             color: #f59e0b;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Die Nachtschicht</h1>
-        <p>Das Gildenportal ist im Aufbau.</p>
-    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <h1>Die Nachtschicht</h1>
+            <span>Gildenportal & Dashboard</span>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav>
+        <button class="nav-btn active">Übersicht / News</button>
+        <button class="nav-btn">Mitglieder</button>
+        <button class="nav-btn">Raid & Kader</button>
+        <button class="nav-btn">Gildenbank & Loot</button>
+        <button class="nav-btn">Regeln</button>
+    </nav>
+
+    <!-- Hauptbereich -->
+    <main>
+        <div class="card">
+            <h2>Willkommen auf dem Gildenportal</h2>
+            <p>Hier entsteht die neue Zentrale der Gilde <strong>Die Nachtschicht</strong>.</p>
+        </div>
+    </main>
+
 </body>
 </html>
