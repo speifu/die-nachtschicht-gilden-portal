@@ -1,59 +1,321 @@
-<script>
-    const CLIENT_ID = '1561898325244903468';
-    // Exakte Zieladresse für den Login
-    const REDIRECT_URI = 'https://speifu.github.io/die-nachtschicht-gilden-portal/';
-
-    function openTab(evt, tabName) {
-        const contents = document.getElementsByClassName("tab-content");
-        for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
-        
-        const buttons = document.getElementsByClassName("nav-btn");
-        for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
-
-        document.getElementById(tabName).classList.add("active");
-        evt.currentTarget.classList.add("active");
-    }
-
-    function filterTable() {
-        const input = document.getElementById("memberSearch").value.toUpperCase();
-        const trs = document.getElementById("memberTable").getElementsByTagName("tr");
-        for (let i = 1; i < trs.length; i++) {
-            const txt = trs[i].textContent || trs[i].innerText;
-            trs[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? "" : "none";
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Die Nachtschicht - Gildenportal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
         }
-    }
 
-    // Discord Login-Weiterleitung
-    function loginWithDiscord() {
-        const scope = encodeURIComponent('identify guilds.members.read');
-        const redirect = encodeURIComponent(REDIRECT_URI);
-        const discordUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
-        
-        // Leitet den Browser direkt zur Discord-Freigabe weiter
-        window.location.href = discordUrl;
-    }
-
-    // Prüfen, ob der User von Discord zurückgekehrt ist
-    window.addEventListener('DOMContentLoaded', () => {
-        const hash = window.location.hash.slice(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-
-        if (accessToken) {
-            fetch('https://discord.com/api/users/@me', {
-                headers: { authorization: `Bearer ${accessToken}` }
-            })
-            .then(res => res.json())
-            .then(user => {
-                const btn = document.getElementById("discordBtn");
-                if (btn) {
-                    btn.classList.add("active");
-                    btn.innerHTML = `<span>Aktiv: ${user.username}</span>`;
-                }
-                // Schaltet den Offi-Modus frei
-                document.body.classList.add("offi-mode");
-            })
-            .catch(err => console.error("Discord Auth Fehler:", err));
+        /* Header & Navigation */
+        header {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-    });
-</script>
+        .logo h1 { color: #f59e0b; font-size: 1.8rem; letter-spacing: 1px; }
+        .logo span { color: #94a3b8; font-size: 0.9rem; }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .discord-login-btn {
+            background-color: #5865F2;
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+        .discord-login-btn:hover { background-color: #4752C4; }
+        .discord-login-btn.active { background-color: #22c55e; color: #0f172a; }
+
+        nav {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 0 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            padding: 1rem 1.2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover { color: #f8fafc; }
+        .nav-btn.active { color: #f59e0b; border-bottom-color: #f59e0b; }
+
+        /* Main Content */
+        main { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+        .card h2 { color: #f59e0b; margin-bottom: 1rem; }
+
+        /* Suchleiste */
+        .table-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            flex-grow: 1;
+        }
+
+        /* Tabellen-Design */
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #334155;
+        }
+        th { background-color: #0f172a; color: #f59e0b; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+        tr:hover { background-color: #26334d; }
+
+        /* Interne Spalten (nur im Offi-Modus sichtbar) */
+        .internal-col {
+            display: none;
+            background-color: rgba(239, 68, 68, 0.05);
+        }
+        body.offi-mode .internal-col {
+            display: table-cell;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-schichtf { background-color: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
+        .badge-vorarbeiter { background-color: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid #eab308; }
+        .badge-stamm { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+
+        .note-input {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 0.85rem;
+        }
+        .note-input:focus { border-color: #f59e0b; outline: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <h1>Die Nachtschicht</h1>
+            <span>Gildenportal & Dashboard</span>
+        </div>
+        <div class="header-right">
+            <button id="discordBtn" class="discord-login-btn" onclick="loginWithDiscord()">
+                <span>Login mit Discord</span>
+            </button>
+        </div>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="openTab(event, 'news')">Übersicht / News</button>
+        <button class="nav-btn" onclick="openTab(event, 'mitglieder')">Mitglieder</button>
+        <button class="nav-btn" onclick="openTab(event, 'raid')">Raid & Kader</button>
+        <button class="nav-btn" onclick="openTab(event, 'bank')">Gildenbank & Loot</button>
+        <button class="nav-btn" onclick="openTab(event, 'regeln')">Regeln</button>
+    </nav>
+
+    <main>
+        <!-- TAB 1: NEWS -->
+        <div id="news" class="tab-content active">
+            <div class="card">
+                <h2>Willkommen auf dem Gildenportal</h2>
+                <p>Öffentliche Gilden-Zentrale der Gilde <strong>Die Nachtschicht</strong>.</p>
+            </div>
+        </div>
+
+        <!-- TAB 2: MITGLIEDER -->
+        <div id="mitglieder" class="tab-content">
+            <div class="card">
+                <h2>Mitglieder-Kader</h2>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">Übersicht aller aktiven Mitglieder und ihrer Raid-Spezialisierungen.</p>
+                
+                <div class="table-controls">
+                    <input type="text" id="memberSearch" class="search-input" placeholder="Mitglied oder Specc suchen..." onkeyup="filterTable()">
+                </div>
+
+                <div class="table-container">
+                    <table id="memberTable">
+                        <thead>
+                            <tr>
+                                <th>Display Name</th>
+                                <th>Gild-Rolle</th>
+                                <th>Main Spec</th>
+                                <th>Twink Spec 1</th>
+                                <th>Twink Spec 2</th>
+                                <!-- Interne Spalten (Nur im Offi-Modus sichtbar) -->
+                                <th class="internal-col">Status</th>
+                                <th class="internal-col">Username</th>
+                                <th class="internal-col">Offi Notiz</th>
+                                <th class="internal-col">Raidleitung Notiz</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Ben</strong></td>
+                                <td><span class="badge badge-schichtf">Schichtführer</span></td>
+                                <td>Heiler</td>
+                                <td>Tank</td>
+                                <td>DD</td>
+                                <td class="internal-col"><span style="color: #4ade80;">Aktiv</span></td>
+                                <td class="internal-col">benearth</td>
+                                <td class="internal-col"><input type="text" class="note-input" value="Gildenleitung"></td>
+                                <td class="internal-col"><input type="text" class="note-input" value="Organisator"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Feena</strong></td>
+                                <td><span class="badge badge-vorarbeiter">Vorarbeiter</span></td>
+                                <td>DD (Shadow)</td>
+                                <td>Heiler</td>
+                                <td>-</td>
+                                <td class="internal-col"><span style="color: #4ade80;">Aktiv</span></td>
+                                <td class="internal-col">gqfeena</td>
+                                <td class="internal-col"><input type="text" class="note-input" value=""></td>
+                                <td class="internal-col"><input type="text" class="note-input" value=""></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SalzBaerTV</strong></td>
+                                <td><span class="badge badge-vorarbeiter">Vorarbeiter</span></td>
+                                <td>Tank</td>
+                                <td>DD</td>
+                                <td>-</td>
+                                <td class="internal-col"><span style="color: #4ade80;">Aktiv</span></td>
+                                <td class="internal-col">salzbaertv</td>
+                                <td class="internal-col"><input type="text" class="note-input" value="Gildenbank Betreuung"></td>
+                                <td class="internal-col"><input type="text" class="note-input" value=""></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Moelner</strong></td>
+                                <td><span class="badge badge-stamm">Stammbelegschaft</span></td>
+                                <td>Tank</td>
+                                <td>DD</td>
+                                <td>-</td>
+                                <td class="internal-col"><span style="color: #4ade80;">Aktiv</span></td>
+                                <td class="internal-col">moelner.</td>
+                                <td class="internal-col"><input type="text" class="note-input" value="Etwas laut, im Auge behalten"></td>
+                                <td class="internal-col"><input type="text" class="note-input" value=""></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- WEITERE TABS -->
+        <div id="raid" class="tab-content"><div class="card"><h2>Raid & Kader</h2><p>In Kürze...</p></div></div>
+        <div id="bank" class="tab-content"><div class="card"><h2>Gildenbank & Loot</h2><p>In Kürze...</p></div></div>
+        <div id="regeln" class="tab-content"><div class="card"><h2>Regeln</h2><p>In Kürze...</p></div></div>
+    </main>
+
+    <script>
+        const CLIENT_ID = '1561898325244903468';
+        const REDIRECT_URI = 'https://speifu.github.io/die-nachtschicht-gilden-portal/';
+
+        function openTab(evt, tabName) {
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+            
+            const buttons = document.getElementsByClassName("nav-btn");
+            for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
+
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function filterTable() {
+            const input = document.getElementById("memberSearch").value.toUpperCase();
+            const trs = document.getElementById("memberTable").getElementsByTagName("tr");
+            for (let i = 1; i < trs.length; i++) {
+                const txt = trs[i].textContent || trs[i].innerText;
+                trs[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? "" : "none";
+            }
+        }
+
+        function loginWithDiscord() {
+            const scope = encodeURIComponent('identify guilds.members.read');
+            const redirect = encodeURIComponent(REDIRECT_URI);
+            const discordUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
+            window.location.href = discordUrl;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.slice(1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+
+            if (accessToken) {
+                fetch('https://discord.com/api/users/@me', {
+                    headers: { authorization: `Bearer ${accessToken}` }
+                })
+                .then(res => res.json())
+                .then(user => {
+                    const btn = document.getElementById("discordBtn");
+                    if (btn) {
+                        btn.classList.add("active");
+                        btn.innerHTML = `<span>Aktiv: ${user.username}</span>`;
+                    }
+                    document.body.classList.add("offi-mode");
+                })
+                .catch(err => console.error("Discord Auth Fehler:", err));
+            }
+        });
+    </script>
+
+</body>
+</html>
